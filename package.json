@@ -1,0 +1,14 @@
+{
+  "name": "bot-relatorios-hp",
+  "version": "1.0.0",
+  "description": "Bot de relatórios hospitalares",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.21.0",
+    "dotenv": "^16.6.1"
+  }
+}
