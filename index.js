@@ -9,8 +9,8 @@ const {
 } = require("discord.js");
 
 // COLOQUE AQUI
-const TOKEN = "COLE_SEU_TOKEN_AQUI";
-const GUILD_ID = "COLE_ID_DO_SEU_SERVIDOR_AQUI";
+const TOKEN = "MTUwMjQ3NTY5NTMyOTM4MjQ4MQ.GdFq4V.xERixN4-xtOBKG-3noQcqIG1LZi1aW-Rwchiwc";
+const GUILD_ID = "1456655598031601727";
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
