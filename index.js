@@ -2,16 +2,11 @@ const {
   Client,
   GatewayIntentBits,
   ChannelType,
-  PermissionFlagsBits,
-  SlashCommandBuilder,
-  REST,
-  Routes
+  PermissionFlagsBits
 } = require("discord.js");
 
 const TOKEN = process.env.TOKEN;
 
-const GUILD_ID = "1456655598031601727";
-const CLIENT_ID = "1506127641810305144";
 const DONO_ID = "1456655598593511539";
 
 if (!TOKEN) {
@@ -20,7 +15,11 @@ if (!TOKEN) {
 }
 
 const client = new Client({
-  intents: [GatewayIntentBits.Guilds]
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent
+  ]
 });
 
 const estrutura = [
@@ -141,6 +140,7 @@ function permissoes(guild, bloco, cargoPrivado) {
           PermissionFlagsBits.ViewChannel,
           PermissionFlagsBits.ManageChannels,
           PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.ReadMessageHistory,
           PermissionFlagsBits.Connect,
           PermissionFlagsBits.Speak
         ]
@@ -180,6 +180,7 @@ function permissoes(guild, bloco, cargoPrivado) {
           PermissionFlagsBits.ViewChannel,
           PermissionFlagsBits.ManageChannels,
           PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.ReadMessageHistory,
           PermissionFlagsBits.Connect,
           PermissionFlagsBits.Speak
         ]
@@ -202,7 +203,8 @@ function permissoes(guild, bloco, cargoPrivado) {
         allow: [
           PermissionFlagsBits.ViewChannel,
           PermissionFlagsBits.ManageChannels,
-          PermissionFlagsBits.SendMessages
+          PermissionFlagsBits.SendMessages,
+          PermissionFlagsBits.ReadMessageHistory
         ]
       }
     ];
@@ -225,6 +227,7 @@ function permissoes(guild, bloco, cargoPrivado) {
         PermissionFlagsBits.ViewChannel,
         PermissionFlagsBits.ManageChannels,
         PermissionFlagsBits.SendMessages,
+        PermissionFlagsBits.ReadMessageHistory,
         PermissionFlagsBits.Connect,
         PermissionFlagsBits.Speak
       ]
@@ -275,52 +278,7 @@ async function buscarOuCriarCanal(guild, nome, tipo, categoria, overwrites) {
   return canal;
 }
 
-client.once("ready", async () => {
-  console.log("================================");
-  console.log("✅ BOT ONLINE");
-  console.log(`🤖 ${client.user.tag}`);
-  console.log("================================");
-
-  const commands = [
-    new SlashCommandBuilder()
-      .setName("organizar")
-      .setDescription("Cria e organiza o Discord")
-      .toJSON()
-  ];
-
-  const rest = new REST({
-    version: "10"
-  }).setToken(TOKEN);
-
-  try {
-    await rest.put(
-      Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
-      {
-        body: commands
-      }
-    );
-
-    console.log("✅ /organizar registrado!");
-  } catch (err) {
-    console.log("❌ Erro ao registrar comando:");
-    console.log(err);
-  }
-});
-
-client.on("interactionCreate", async interaction => {
-  if (!interaction.isChatInputCommand()) return;
-  if (interaction.commandName !== "organizar") return;
-
-  if (interaction.user.id !== DONO_ID) {
-    return interaction.reply({
-      content: "❌ Apenas o dono pode usar este comando.",
-      ephemeral: true
-    });
-  }
-
-  await interaction.reply("🔧 Organizando Discord...");
-
-  const guild = interaction.guild;
+async function organizarDiscord(guild) {
   let contador = 0;
 
   for (let i = 0; i < estrutura.length; i++) {
@@ -370,9 +328,43 @@ client.on("interactionCreate", async interaction => {
     }
   }
 
-  await interaction.editReply(
-    `✅ Discord organizado com sucesso!\n📁 Categorias: ${estrutura.length}\n📌 Canais: ${contador}`
-  );
+  return contador;
+}
+
+client.once("ready", () => {
+  console.log("================================");
+  console.log("✅ BOT ONLINE");
+  console.log(`🤖 ${client.user.tag}`);
+  console.log("================================");
+  console.log("✅ Comando ativo: !organizar");
+});
+
+client.on("messageCreate", async message => {
+  if (message.author.bot) return;
+  if (!message.guild) return;
+
+  if (message.content.toLowerCase() !== "!organizar") return;
+
+  if (message.author.id !== DONO_ID) {
+    return message.reply("❌ Apenas o dono pode usar este comando.");
+  }
+
+  try {
+    await message.reply("🔧 Organizando Discord...");
+
+    const contador = await organizarDiscord(message.guild);
+
+    await message.reply(
+      `✅ Discord organizado com sucesso!\n📁 Categorias: ${estrutura.length}\n📌 Canais: ${contador}`
+    );
+  } catch (err) {
+    console.log("❌ Erro ao organizar:");
+    console.log(err);
+
+    await message.reply(
+      "❌ Deu erro ao organizar. Verifique se o bot tem permissão de Administrador."
+    );
+  }
 });
 
 client.login(TOKEN);
