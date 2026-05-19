@@ -6,11 +6,10 @@ const {
 } = require("discord.js");
 
 const TOKEN = process.env.TOKEN;
-
 const DONO_ID = "1456655598593511539";
 
 if (!TOKEN) {
-  console.log("❌ TOKEN não encontrado nas Variables do Railway.");
+  console.log("❌ TOKEN não encontrado.");
   process.exit(1);
 }
 
@@ -118,15 +117,16 @@ async function criarCargo(guild, nome) {
   if (!cargo) {
     cargo = await guild.roles.create({
       name: nome,
-      reason: "Cargo criado automaticamente"
+      reason: "Cargo criado pelo bot organizador"
     });
   }
 
   return cargo;
 }
 
-function permissoes(guild, bloco, cargoPrivado) {
+function montarPermissoes(guild, bloco, cargoPrivado) {
   const everyone = guild.roles.everyone;
+  const botId = guild.members.me.id;
 
   if (bloco.admin) {
     return [
@@ -135,7 +135,7 @@ function permissoes(guild, bloco, cargoPrivado) {
         deny: [PermissionFlagsBits.ViewChannel]
       },
       {
-        id: guild.members.me.id,
+        id: botId,
         allow: [
           PermissionFlagsBits.ViewChannel,
           PermissionFlagsBits.ManageChannels,
@@ -175,7 +175,7 @@ function permissoes(guild, bloco, cargoPrivado) {
         ]
       },
       {
-        id: guild.members.me.id,
+        id: botId,
         allow: [
           PermissionFlagsBits.ViewChannel,
           PermissionFlagsBits.ManageChannels,
@@ -199,7 +199,7 @@ function permissoes(guild, bloco, cargoPrivado) {
         deny: [PermissionFlagsBits.SendMessages]
       },
       {
-        id: guild.members.me.id,
+        id: botId,
         allow: [
           PermissionFlagsBits.ViewChannel,
           PermissionFlagsBits.ManageChannels,
@@ -222,7 +222,7 @@ function permissoes(guild, bloco, cargoPrivado) {
       ]
     },
     {
-      id: guild.members.me.id,
+      id: botId,
       allow: [
         PermissionFlagsBits.ViewChannel,
         PermissionFlagsBits.ManageChannels,
@@ -235,7 +235,7 @@ function permissoes(guild, bloco, cargoPrivado) {
   ];
 }
 
-async function buscarOuCriarCategoria(guild, nome, overwrites, posicao) {
+async function buscarOuCriarCategoria(guild, nome, permissoes, posicao) {
   let categoria = guild.channels.cache.find(
     c => c.name === nome && c.type === ChannelType.GuildCategory
   );
@@ -244,18 +244,19 @@ async function buscarOuCriarCategoria(guild, nome, overwrites, posicao) {
     categoria = await guild.channels.create({
       name: nome,
       type: ChannelType.GuildCategory,
-      permissionOverwrites: overwrites,
-      position: posicao
+      permissionOverwrites: permissoes,
+      position: posicao,
+      reason: "Categoria criada pelo bot organizador"
     });
   } else {
-    await categoria.permissionOverwrites.set(overwrites);
-    await categoria.setPosition(posicao);
+    await categoria.permissionOverwrites.set(permissoes);
+    await categoria.setPosition(posicao).catch(() => {});
   }
 
   return categoria;
 }
 
-async function buscarOuCriarCanal(guild, nome, tipo, categoria, overwrites) {
+async function buscarOuCriarCanal(guild, nome, tipo, categoria, permissoes) {
   let canal = guild.channels.cache.find(
     c => c.name === nome && c.type === tipo
   );
@@ -265,21 +266,27 @@ async function buscarOuCriarCanal(guild, nome, tipo, categoria, overwrites) {
       name: nome,
       type: tipo,
       parent: categoria.id,
-      permissionOverwrites: overwrites
+      permissionOverwrites: permissoes,
+      reason: "Canal criado pelo bot organizador"
     });
   } else {
-    await canal.setParent(categoria.id, {
-      lockPermissions: false
-    });
+    if (canal.parentId !== categoria.id) {
+      await canal.setParent(categoria.id, { lockPermissions: false });
+    }
 
-    await canal.permissionOverwrites.set(overwrites);
+    await canal.permissionOverwrites.set(permissoes);
   }
 
   return canal;
 }
 
-async function organizarDiscord(guild) {
-  let contador = 0;
+async function organizarServidor(guild) {
+  let categorias = 0;
+  let canaisTexto = 0;
+  let canaisVoz = 0;
+
+  await guild.channels.fetch();
+  await guild.roles.fetch();
 
   for (let i = 0; i < estrutura.length; i++) {
     const bloco = estrutura[i];
@@ -290,14 +297,16 @@ async function organizarDiscord(guild) {
       cargoPrivado = await criarCargo(guild, bloco.cargo);
     }
 
-    const overwrites = permissoes(guild, bloco, cargoPrivado);
+    const permissoes = montarPermissoes(guild, bloco, cargoPrivado);
 
     const categoria = await buscarOuCriarCategoria(
       guild,
       bloco.categoria,
-      overwrites,
+      permissoes,
       i
     );
+
+    categorias++;
 
     if (bloco.canais) {
       for (const nome of bloco.canais) {
@@ -306,10 +315,10 @@ async function organizarDiscord(guild) {
           nome,
           ChannelType.GuildText,
           categoria,
-          overwrites
+          permissoes
         );
 
-        contador++;
+        canaisTexto++;
       }
     }
 
@@ -320,49 +329,63 @@ async function organizarDiscord(guild) {
           nome,
           ChannelType.GuildVoice,
           categoria,
-          overwrites
+          permissoes
         );
 
-        contador++;
+        canaisVoz++;
       }
     }
   }
 
-  return contador;
+  return {
+    categorias,
+    canaisTexto,
+    canaisVoz
+  };
 }
 
 client.once("ready", () => {
-  console.log("================================");
+  console.log("=================================");
   console.log("✅ BOT ONLINE");
   console.log(`🤖 ${client.user.tag}`);
-  console.log("================================");
-  console.log("✅ Comando ativo: !organizar");
+  console.log("✅ Comando: !organizar");
+  console.log("=================================");
 });
 
 client.on("messageCreate", async message => {
   if (message.author.bot) return;
   if (!message.guild) return;
 
-  if (message.content.toLowerCase() !== "!organizar") return;
+  const comando = message.content.trim().toLowerCase();
+
+  if (comando !== "!organizar") return;
 
   if (message.author.id !== DONO_ID) {
-    return message.reply("❌ Apenas o dono pode usar este comando.");
+    return message.reply("❌ Apenas o dono pode usar esse comando.");
+  }
+
+  const botMember = message.guild.members.me;
+
+  if (!botMember.permissions.has(PermissionFlagsBits.Administrator)) {
+    return message.reply(
+      "❌ O bot precisa estar com permissão de ADMINISTRADOR para organizar o servidor."
+    );
   }
 
   try {
-    await message.reply("🔧 Organizando Discord...");
+    const aviso = await message.reply("🔧 Verificando salas e organizando abas...");
 
-    const contador = await organizarDiscord(message.guild);
+    const resultado = await organizarServidor(message.guild);
 
-    await message.reply(
-      `✅ Discord organizado com sucesso!\n📁 Categorias: ${estrutura.length}\n📌 Canais: ${contador}`
+    await aviso.edit(
+      `✅ Servidor organizado com sucesso!\n\n📁 Categorias verificadas/criadas: ${resultado.categorias}\n💬 Canais de texto organizados: ${resultado.canaisTexto}\n🔊 Canais de voz organizados: ${resultado.canaisVoz}`
     );
-  } catch (err) {
-    console.log("❌ Erro ao organizar:");
-    console.log(err);
+  } catch (erro) {
+    console.log("❌ ERRO AO ORGANIZAR:");
+    console.log(erro);
 
     await message.reply(
-      "❌ Deu erro ao organizar. Verifique se o bot tem permissão de Administrador."
+      "❌ Deu erro ao organizar. Confira se o bot está acima dos cargos e com Administrador."
     );
   }
 });
