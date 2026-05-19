@@ -9,7 +9,7 @@ const {
 } = require("discord.js");
 
 // COLOQUE AQUI
-const TOKEN = "MTUwMjQ3NTY5NTMyOTM4MjQ4MQ.GdFq4V.xERixN4-xtOBKG-3noQcqIG1LZi1aW-Rwchiwc";
+const TOKEN = "MTUwMjQ3NTY5NTMyOTM4MjQ4MQ.G49log.Atd5qZroarZlkDIZSnPCiExY4nNsi5TE0w3DFE";
 const GUILD_ID = "1456655598031601727";
 
 const client = new Client({
