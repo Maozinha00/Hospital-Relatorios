@@ -1,14 +1,25 @@
 {
-  "name": "bot-relatorios-hp",
+  "name": "familia-souza-bot",
   "version": "1.0.0",
-  "description": "Bot de relatórios hospitalares",
+  "description": "Bot para organizar o Discord da Família Souza",
   "main": "index.js",
-  "type": "module",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "node --watch index.js"
   },
+  "keywords": [
+    "discord",
+    "discordjs",
+    "fivem",
+    "fivez",
+    "cidadebella",
+    "euforia",
+    "projetox"
+  ],
+  "author": "Henrique Souza",
+  "license": "MIT",
   "dependencies": {
     "discord.js": "^14.21.0",
-    "dotenv": "^16.6.1"
+    "dotenv": "^16.5.0"
   }
 }
