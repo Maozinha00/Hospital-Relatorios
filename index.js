@@ -8,9 +8,18 @@ const {
   Routes
 } = require("discord.js");
 
-// COLOQUE AQUI
-const TOKEN = "MTUwMjQ3NTY5NTMyOTM4MjQ4MQ.G49log.Atd5qZroarZlkDIZSnPCiExY4nNsi5TE0w3DFE";
-const GUILD_ID = "1456655598031601727";
+const TOKEN = process.env.TOKEN;
+const GUILD_ID = process.env.GUILD_ID;
+
+if (!TOKEN) {
+  console.log("❌ TOKEN não encontrado nas Variables do Railway.");
+  process.exit(1);
+}
+
+if (!GUILD_ID) {
+  console.log("❌ GUILD_ID não encontrado nas Variables do Railway.");
+  process.exit(1);
+}
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
@@ -47,7 +56,12 @@ const estrutura = [
       "👗・roupas-aurora",
       "🧥・roupas-henrique"
     ],
-    voz: ["familia", "🔒｜💎-FAMILIA-SOUZA・", "resenha-familia", "familia-naty"]
+    voz: [
+      "familia",
+      "🔒｜💎-FAMILIA-SOUZA・",
+      "resenha-familia",
+      "familia-naty"
+    ]
   },
   {
     categoria: "🏥 HOSPITAL / BELLA",
@@ -63,15 +77,12 @@ const estrutura = [
     categoria: "🎯 METAS SEMANAIS 📊",
     canais: [
       "👑・seven-desconhecido",
-
       "💼・henrique-souza",
       "💼・aurora-souza",
       "💼・mano-giga",
-
       "👥・australopitecus-hahaha",
       "👥・francisco-miller",
       "👥・sophia-santos",
-
       "📋・jopa-aky",
       "📋・ban-ban-jackson",
       "📋・block-wood",
