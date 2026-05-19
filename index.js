@@ -1,4 +1,3 @@
-```js
 const {
   Client,
   GatewayIntentBits,
@@ -9,7 +8,9 @@ const {
   Routes
 } = require("discord.js");
 
-require("dotenv").config();
+// COLOQUE AQUI
+const TOKEN = "COLE_SEU_TOKEN_AQUI";
+const GUILD_ID = "COLE_ID_DO_SEU_SERVIDOR_AQUI";
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
@@ -18,21 +19,12 @@ const client = new Client({
 const estrutura = [
   {
     categoria: "📌 BASE DA RESENHA",
-    canais: [
-      "💭・bem-vindo",
-      "📌・regras",
-      "📢・avisos"
-    ]
+    canais: ["💭・bem-vindo", "📌・regras", "📢・avisos"]
   },
-
   {
     categoria: "🌆 CIDADE EUFORIA",
-    canais: [
-      "eufo👾",
-      "eufo-fotos👾"
-    ]
+    canais: ["eufo👾", "eufo-fotos👾"]
   },
-
   {
     categoria: "☣️ FIVEZ / PROJETO X",
     canais: [
@@ -45,13 +37,8 @@ const estrutura = [
       "💰 valores-clãs",
       "👕 roupa"
     ],
-    voz: [
-      "BATE PAPO FiveZ",
-      "BATE PAPO LIVE",
-      "BATE PAPO DAYZ 2"
-    ]
+    voz: ["BATE PAPO FiveZ", "BATE PAPO LIVE", "BATE PAPO DAYZ 2"]
   },
-
   {
     categoria: "💎 ÁREA VIP • FAMÍLIA SOUZA",
     canais: [
@@ -60,14 +47,8 @@ const estrutura = [
       "👗・roupas-aurora",
       "🧥・roupas-henrique"
     ],
-    voz: [
-      "familia",
-      "🔒｜💎-FAMILIA-SOUZA・",
-      "resenha-familia",
-      "familia-naty"
-    ]
+    voz: ["familia", "🔒｜💎-FAMILIA-SOUZA・", "resenha-familia", "familia-naty"]
   },
-
   {
     categoria: "🏥 HOSPITAL / BELLA",
     canais: [
@@ -78,7 +59,6 @@ const estrutura = [
       "🎁｜divulgação"
     ]
   },
-
   {
     categoria: "🎯 METAS SEMANAIS 📊",
     canais: [
@@ -104,7 +84,6 @@ const estrutura = [
       "📋・walter-magalhaes"
     ]
   },
-
   {
     categoria: "🔊 VOZ",
     voz: [
@@ -117,21 +96,13 @@ const estrutura = [
       "Geral 5"
     ]
   },
-
   {
     categoria: "🤖 BOTS",
-    canais: [
-      "🤖・jogos",
-      "🤖・comandos"
-    ]
+    canais: ["🤖・jogos", "🤖・comandos"]
   },
-
   {
     categoria: "👮 ADMIN",
-    canais: [
-      "🚫・denuncias",
-      "⭐｜suporte"
-    ]
+    canais: ["🚫・denuncias", "⭐｜suporte"]
   }
 ];
 
@@ -145,20 +116,15 @@ client.once("ready", async () => {
       .toJSON()
   ];
 
-  const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
+  const rest = new REST({ version: "10" }).setToken(TOKEN);
 
   try {
-
     await rest.put(
-      Routes.applicationGuildCommands(
-        client.user.id,
-        process.env.GUILD_ID
-      ),
+      Routes.applicationGuildCommands(client.user.id, GUILD_ID),
       { body: commands }
     );
 
     console.log("✅ Comando /organizar registrado.");
-
   } catch (erro) {
     console.log("❌ Erro ao registrar comando:");
     console.log(erro);
@@ -166,16 +132,10 @@ client.once("ready", async () => {
 });
 
 client.on("interactionCreate", async interaction => {
-
   if (!interaction.isChatInputCommand()) return;
 
   if (interaction.commandName === "organizar") {
-
-    if (
-      !interaction.member.permissions.has(
-        PermissionFlagsBits.Administrator
-      )
-    ) {
+    if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
       return interaction.reply({
         content: "❌ Você precisa ser administrador.",
         ephemeral: true
@@ -187,11 +147,8 @@ client.on("interactionCreate", async interaction => {
     const guild = interaction.guild;
 
     for (const bloco of estrutura) {
-
       let categoria = guild.channels.cache.find(
-        c =>
-          c.name === bloco.categoria &&
-          c.type === ChannelType.GuildCategory
+        c => c.name === bloco.categoria && c.type === ChannelType.GuildCategory
       );
 
       if (!categoria) {
@@ -202,63 +159,44 @@ client.on("interactionCreate", async interaction => {
       }
 
       if (bloco.canais) {
-
         for (const nome of bloco.canais) {
-
           let canal = guild.channels.cache.find(
-            c =>
-              c.name === nome &&
-              c.type === ChannelType.GuildText
+            c => c.name === nome && c.type === ChannelType.GuildText
           );
 
           if (!canal) {
-
-            canal = await guild.channels.create({
+            await guild.channels.create({
               name: nome,
               type: ChannelType.GuildText,
               parent: categoria.id
             });
-
           } else {
-
             await canal.setParent(categoria.id);
-
           }
         }
       }
 
       if (bloco.voz) {
-
         for (const nome of bloco.voz) {
-
           let canal = guild.channels.cache.find(
-            c =>
-              c.name === nome &&
-              c.type === ChannelType.GuildVoice
+            c => c.name === nome && c.type === ChannelType.GuildVoice
           );
 
           if (!canal) {
-
-            canal = await guild.channels.create({
+            await guild.channels.create({
               name: nome,
               type: ChannelType.GuildVoice,
               parent: categoria.id
             });
-
           } else {
-
             await canal.setParent(categoria.id);
-
           }
         }
       }
     }
 
-    await interaction.editReply(
-      "✅ Discord organizado com sucesso!"
-    );
+    await interaction.editReply("✅ Discord organizado com sucesso!");
   }
 });
 
-client.login(process.env.TOKEN);
-```
+client.login(TOKEN);
