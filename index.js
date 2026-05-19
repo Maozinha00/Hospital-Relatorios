@@ -1,257 +1,229 @@
-import "dotenv/config";
-import {
+const {
   Client,
   GatewayIntentBits,
-  EmbedBuilder,
-  PermissionsBitField,
-} from "discord.js";
+  ChannelType,
+  PermissionFlagsBits,
+  SlashCommandBuilder,
+  REST,
+  Routes
+} = require("discord.js");
 
-// ==========================================
-// CLIENT
-// ==========================================
+require("dotenv").config();
 
 const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildMembers,
-  ],
+  intents: [GatewayIntentBits.Guilds]
 });
 
-// ==========================================
-// CONFIGURAÇÕES
-// ==========================================
+const estrutura = [
+  {
+    categoria: "📌 BASE DA RESENHA",
+    canais: [
+      "💭・bem-vindo",
+      "📌・regras",
+      "📢・avisos"
+    ]
+  },
 
-// CANAL DE RELATÓRIOS
-const CANAL_RELATORIOS = "1477683906026406084";
+  {
+    categoria: "🌆 CIDADE EUFORIA",
+    canais: [
+      "eufo👾",
+      "eufo-fotos👾"
+    ]
+  },
 
-// CARGO QUE PODE USAR O BOT
-const CARGO_PERMITIDO = "1490431614055088128";
+  {
+    categoria: "☣️ FIVEZ / PROJETO X",
+    canais: [
+      "farme-fivez👾",
+      "📌 Regras-Projeto-X",
+      "💬 Chat-Projeto-X",
+      "📋 MEMBROS",
+      "📢 avisos",
+      "💰 valores-clã",
+      "💰 valores-clãs",
+      "👕 roupa"
+    ],
+    voz: [
+      "BATE PAPO FiveZ",
+      "BATE PAPO LIVE",
+      "BATE PAPO DAYZ 2"
+    ]
+  },
 
-// CARGOS SUPERIORES
-const CARGOS_SUPERIORES = [
-  "Diretor",
-  "Vice-Diretor",
-  "Supervisor",
-  "Coordenador",
+  {
+    categoria: "💎 ÁREA VIP • FAMÍLIA SOUZA",
+    canais: [
+      "💎・familia-souza",
+      "👕・set-roupas",
+      "👗・roupas-aurora",
+      "🧥・roupas-henrique"
+    ],
+    voz: [
+      "familia",
+      "🔒｜💎-FAMILIA-SOUZA・",
+      "resenha-familia",
+      "familia-naty"
+    ]
+  },
+
+  {
+    categoria: "🏥 HOSPITAL / BELLA",
+    canais: [
+      "🎥・lives",
+      "📸・midia",
+      "💡・sugestões",
+      "❌｜denúncias",
+      "🎁｜divulgação"
+    ]
+  },
+
+  {
+    categoria: "🎯 METAS SEMANAIS 📊",
+    canais: [
+      "👑・seven-desconhecido",
+
+      "💼・henrique-souza",
+      "💼・aurora-souza",
+      "💼・mano-giga",
+
+      "👥・australopitecus-hahaha",
+      "👥・francisco-miller",
+      "👥・sophia-santos",
+
+      "📋・jopa-aky",
+      "📋・ban-ban-jackson",
+      "📋・block-wood",
+      "📋・coelho-zerovintum",
+      "📋・crazy-zzz",
+      "📋・jhony-deep",
+      "📋・logan-poll",
+      "📋・mateus-urgbar",
+      "📋・saimon-sixone",
+      "📋・walter-magalhaes"
+    ]
+  },
+
+  {
+    categoria: "🔊 VOZ",
+    voz: [
+      "🔇・sem-microfone",
+      "🔊 MEMBROS NOVOS",
+      "🔊・geral-1",
+      "🔊・geral-2",
+      "Geral 3",
+      "Geral 4",
+      "Geral 5"
+    ]
+  },
+
+  {
+    categoria: "🤖 BOTS",
+    canais: [
+      "🤖・jogos",
+      "🤖・comandos"
+    ]
+  },
+
+  {
+    categoria: "👮 ADMIN",
+    canais: [
+      "🚫・denuncias",
+      "⭐｜suporte"
+    ]
+  }
 ];
 
-// ==========================================
-// BOT ONLINE
-// ==========================================
+client.once("ready", async () => {
+  console.log(`✅ Bot ligado como ${client.user.tag}`);
 
-client.once("ready", () => {
-  console.log("=================================");
-  console.log(`✅ BOT ONLINE: ${client.user.tag}`);
-  console.log("=================================");
-});
+  const commands = [
+    new SlashCommandBuilder()
+      .setName("organizar")
+      .setDescription("Organiza o Discord por cidade, família e metas")
+      .toJSON()
+  ];
 
-// ==========================================
-// SISTEMA DE MENSAGENS
-// ==========================================
+  const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 
-client.on("messageCreate", async (message) => {
   try {
-    // IGNORA BOT
-    if (message.author.bot) return;
-
-    // SOMENTE NO CANAL CONFIGURADO
-    if (message.channel.id !== CANAL_RELATORIOS) return;
-
-    // VERIFICA CARGO
-    if (
-      !message.member.roles.cache.has(CARGO_PERMITIDO)
-    ) {
-      return;
-    }
-
-    // ==========================================
-    // COMANDO: !PAINELRELATORIO
-    // ==========================================
-
-    if (message.content === "!painelrelatorio") {
-      const embed = new EmbedBuilder()
-        .setColor("#ff0000")
-        .setTitle("📋 Sistema de Relatórios — Hospital")
-        .setDescription(`
-Olá @|👑| Diretor (a)  
-@|🎖️| Vice.Diretor (a)  
-@|🔱| Supervisor (a)  
-@|📋| Coordenador (a)
-
-Essa aba será utilizada para:
-
-• 📄 Relatórios Gerais  
-• 📊 Frequência dos membros  
-• 🩺 Avaliação de desempenho  
-• ⏳ Tempo de serviço  
-• ✅ Qualidade de serviço  
-• ⭐ Desempenho geral  
-
-━━━━━━━━━━━━━━━━━━
-
-📌 Somente cargos superiores podem realizar relatórios.
-
-• 👑 Diretor  
-• 🎖️ Vice-Diretor  
-• 🔱 Supervisor  
-• 📋 Coordenador  
-
-━━━━━━━━━━━━━━━━━━
-
-📄 Exemplo de relatório:
-
-📄 Relatório Geral — Membro: Mary Blood  
-📌 Cargo Atual: Médica
-
-📊 Frequência dos membros:
-Boa frequência e participação ativa.
-
-🩺 Avaliação de desempenho:
-Boa comunicação e ótimo RP.
-
-⏳ Tempo de serviço:
-Tempo adequado ao cargo.
-
-✅ Qualidade de serviço:
-Atendimentos rápidos e eficientes.
-
-⭐ Desempenho geral:
-Boa profissional com potencial de crescimento.
-
-━━━━━━━━━━━━━━━━━━
-
-👑 Responsável:
-Diretor Henrique
-        `)
-        .setFooter({
-          text: "Sistema Hospitalar",
-        })
-        .setTimestamp();
-
-      await message.channel.send({
-        embeds: [embed],
-      });
-    }
-
-    // ==========================================
-    // COMANDO: !RELATORIO
-    // ==========================================
-
-    if (message.content.startsWith("!relatorio")) {
-      const args = message.content.split(" ");
-
-      // MEMBRO
-      const membro = message.mentions.users.first();
-
-      if (!membro) {
-        return message.reply(
-          "❌ Você precisa mencionar um membro."
-        );
-      }
-
-      // CARGO
-      const cargo = args[2];
-
-      if (!cargo) {
-        return message.reply(
-          "❌ Informe o cargo."
-        );
-      }
-
-      // VERIFICA SE É CARGO SUPERIOR
-      if (!CARGOS_SUPERIORES.includes(cargo)) {
-        return message.reply(`
-❌ Apenas cargos superiores podem utilizar relatórios.
-
-Cargos permitidos:
-• Diretor
-• Vice-Diretor
-• Supervisor
-• Coordenador
-        `);
-      }
-
-      // DADOS
-      const frequencia =
-        args[3] || "Não informado";
-
-      const avaliacao =
-        args[4] || "Não informado";
-
-      const tempo =
-        args[5] || "Não informado";
-
-      const qualidade =
-        args[6] || "Não informado";
-
-      const desempenho =
-        args[7] || "Não informado";
-
-      // EMBED
-      const embed = new EmbedBuilder()
-        .setColor("#00ff88")
-        .setTitle("📄 Relatório Geral")
-        .setThumbnail(
-          membro.displayAvatarURL({
-            dynamic: true,
-          })
-        )
-        .addFields(
-          {
-            name: "👤 Membro",
-            value: `${membro}`,
-            inline: true,
-          },
-          {
-            name: "📌 Cargo Superior",
-            value: cargo,
-            inline: true,
-          },
-          {
-            name: "📊 Frequência dos membros",
-            value: frequencia,
-          },
-          {
-            name:
-              "🩺 Avaliação de desempenho",
-            value: avaliacao,
-          },
-          {
-            name: "⏳ Tempo de serviço",
-            value: tempo,
-          },
-          {
-            name:
-              "✅ Qualidade de serviço",
-            value: qualidade,
-          },
-          {
-            name: "⭐ Desempenho geral",
-            value: desempenho,
-          }
-        )
-        .setFooter({
-          text: `Relatório realizado por ${message.author.username}`,
-        })
-        .setTimestamp();
-
-      await message.channel.send({
-        embeds: [embed],
-      });
-    }
-  } catch (err) {
-    console.log(err);
-
-    message.reply(
-      "❌ Ocorreu um erro ao executar o comando."
+    await rest.put(
+      Routes.applicationCommands(client.user.id),
+      { body: commands }
     );
+
+    console.log("✅ Comando /organizar registrado.");
+  } catch (erro) {
+    console.log("Erro ao registrar comando:", erro);
   }
 });
 
-// ==========================================
-// LOGIN
-// ==========================================
+client.on("interactionCreate", async interaction => {
+  if (!interaction.isChatInputCommand()) return;
+
+  if (interaction.commandName === "organizar") {
+    if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+      return interaction.reply({
+        content: "❌ Você precisa ser administrador para usar esse comando.",
+        ephemeral: true
+      });
+    }
+
+    await interaction.reply("🔧 Organizando o Discord...");
+
+    const guild = interaction.guild;
+
+    for (const bloco of estrutura) {
+      let categoria = guild.channels.cache.find(
+        c => c.name === bloco.categoria && c.type === ChannelType.GuildCategory
+      );
+
+      if (!categoria) {
+        categoria = await guild.channels.create({
+          name: bloco.categoria,
+          type: ChannelType.GuildCategory
+        });
+      }
+
+      if (bloco.canais) {
+        for (const nome of bloco.canais) {
+          let canal = guild.channels.cache.find(
+            c => c.name === nome && c.type === ChannelType.GuildText
+          );
+
+          if (!canal) {
+            canal = await guild.channels.create({
+              name: nome,
+              type: ChannelType.GuildText,
+              parent: categoria.id
+            });
+          } else {
+            await canal.setParent(categoria.id);
+          }
+        }
+      }
+
+      if (bloco.voz) {
+        for (const nome of bloco.voz) {
+          let canal = guild.channels.cache.find(
+            c => c.name === nome && c.type === ChannelType.GuildVoice
+          );
+
+          if (!canal) {
+            canal = await guild.channels.create({
+              name: nome,
+              type: ChannelType.GuildVoice,
+              parent: categoria.id
+            });
+          } else {
+            await canal.setParent(categoria.id);
+          }
+        }
+      }
+    }
+
+    await interaction.editReply("✅ Discord organizado com sucesso!");
+  }
+});
 
 client.login(process.env.TOKEN);
