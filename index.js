@@ -1,3 +1,4 @@
+```js
 const {
   Client,
   GatewayIntentBits,
@@ -140,31 +141,43 @@ client.once("ready", async () => {
   const commands = [
     new SlashCommandBuilder()
       .setName("organizar")
-      .setDescription("Organiza o Discord por cidade, família e metas")
+      .setDescription("Organiza o Discord completo")
       .toJSON()
   ];
 
   const rest = new REST({ version: "10" }).setToken(process.env.TOKEN);
 
   try {
+
     await rest.put(
-      Routes.applicationCommands(client.user.id),
+      Routes.applicationGuildCommands(
+        client.user.id,
+        process.env.GUILD_ID
+      ),
       { body: commands }
     );
 
     console.log("✅ Comando /organizar registrado.");
+
   } catch (erro) {
-    console.log("Erro ao registrar comando:", erro);
+    console.log("❌ Erro ao registrar comando:");
+    console.log(erro);
   }
 });
 
 client.on("interactionCreate", async interaction => {
+
   if (!interaction.isChatInputCommand()) return;
 
   if (interaction.commandName === "organizar") {
-    if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
+
+    if (
+      !interaction.member.permissions.has(
+        PermissionFlagsBits.Administrator
+      )
+    ) {
       return interaction.reply({
-        content: "❌ Você precisa ser administrador para usar esse comando.",
+        content: "❌ Você precisa ser administrador.",
         ephemeral: true
       });
     }
@@ -174,8 +187,11 @@ client.on("interactionCreate", async interaction => {
     const guild = interaction.guild;
 
     for (const bloco of estrutura) {
+
       let categoria = guild.channels.cache.find(
-        c => c.name === bloco.categoria && c.type === ChannelType.GuildCategory
+        c =>
+          c.name === bloco.categoria &&
+          c.type === ChannelType.GuildCategory
       );
 
       if (!categoria) {
@@ -186,44 +202,63 @@ client.on("interactionCreate", async interaction => {
       }
 
       if (bloco.canais) {
+
         for (const nome of bloco.canais) {
+
           let canal = guild.channels.cache.find(
-            c => c.name === nome && c.type === ChannelType.GuildText
+            c =>
+              c.name === nome &&
+              c.type === ChannelType.GuildText
           );
 
           if (!canal) {
+
             canal = await guild.channels.create({
               name: nome,
               type: ChannelType.GuildText,
               parent: categoria.id
             });
+
           } else {
+
             await canal.setParent(categoria.id);
+
           }
         }
       }
 
       if (bloco.voz) {
+
         for (const nome of bloco.voz) {
+
           let canal = guild.channels.cache.find(
-            c => c.name === nome && c.type === ChannelType.GuildVoice
+            c =>
+              c.name === nome &&
+              c.type === ChannelType.GuildVoice
           );
 
           if (!canal) {
+
             canal = await guild.channels.create({
               name: nome,
               type: ChannelType.GuildVoice,
               parent: categoria.id
             });
+
           } else {
+
             await canal.setParent(categoria.id);
+
           }
         }
       }
     }
 
-    await interaction.editReply("✅ Discord organizado com sucesso!");
+    await interaction.editReply(
+      "✅ Discord organizado com sucesso!"
+    );
   }
 });
 
 client.login(process.env.TOKEN);
+```
